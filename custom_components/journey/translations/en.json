@@ -4,7 +4,6 @@
       "user": {
         "description": "Configure the API access and origin/destination points",
         "data": {
-          "osm_username": "OSM Username (Email address)",
           "gmaps_token": "Google Maps API token",
           "origin": "Origin",
           "destination": "Destination",
@@ -13,10 +12,7 @@
       }
     },
     "error": {
-      "auth": "Username/Password is wrong."
-    },
-    "abort": {
-      "single_instance_allowed": "Only a single instance is allowed."
+      "auth": "API token is wrong."
     }
   },
   "options": {

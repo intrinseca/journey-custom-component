@@ -1,7 +1,7 @@
 """Adds config flow for Journey."""
+import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-import voluptuous as vol
 
 from .api import JourneyApiClient
 from .const import (
@@ -9,7 +9,6 @@ from .const import (
     CONF_GMAPS_TOKEN,
     CONF_NAME,
     CONF_ORIGIN,
-    CONF_OSM_USERNAME,
     DOMAIN,
     PLATFORMS,
 )
@@ -29,14 +28,8 @@ class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: ign
         """Handle a flow initialized by the user."""
         self._errors = {}
 
-        # Uncomment the next 2 lines if only a single instance of the integration is allowed:
-        # if self._async_current_entries():
-        #     return self.async_abort(reason="single_instance_allowed")
-
         if user_input is not None:
-            valid = await self._test_credentials(
-                user_input[CONF_OSM_USERNAME], user_input[CONF_GMAPS_TOKEN]
-            )
+            valid = await self._test_credentials(user_input[CONF_GMAPS_TOKEN])
             if valid:
                 return self.async_create_entry(
                     title=user_input[CONF_NAME], data=user_input
@@ -63,17 +56,16 @@ class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: ign
                     vol.Required(CONF_NAME): str,
                     vol.Required(CONF_ORIGIN): str,
                     vol.Required(CONF_DESTINATION): str,
-                    vol.Required(CONF_OSM_USERNAME): str,
                     vol.Required(CONF_GMAPS_TOKEN): str,
                 }
             ),
             errors=self._errors,
         )
 
-    async def _test_credentials(self, osm_username, gmaps_token):
+    async def _test_credentials(self, gmaps_token):
         """Return true if credentials is valid."""
         try:
-            client = JourneyApiClient(osm_username, gmaps_token)
+            client = JourneyApiClient(gmaps_token)
             await client.test_credentials()
             return True
         except Exception:  # pylint: disable=broad-except
@@ -112,5 +104,5 @@ class JourneyOptionsFlowHandler(config_entries.OptionsFlow):
     async def _update_options(self):
         """Update config entry options."""
         return self.async_create_entry(
-            title=self.config_entry.data.get(CONF_OSM_USERNAME), data=self.options
+            title=self.config_entry.data.get(CONF_NAME), data=self.options
         )

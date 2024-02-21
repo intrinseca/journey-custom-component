@@ -3,8 +3,6 @@ import asyncio
 import logging
 from datetime import datetime
 
-from geopy.adapters import AioHTTPAdapter
-from geopy.geocoders import Nominatim
 from googlemaps import Client
 
 TIMEOUT = 10
@@ -16,29 +14,12 @@ Coordinates = tuple[float, float]
 
 
 class JourneyApiClient:
-    """API client for the OSM Nominatim and Google Travel Time APIs."""
+    """API client for the Google Travel Time API."""
 
-    def __init__(self, osm_username: str, gmaps_token: str) -> None:
+    def __init__(self, gmaps_token: str) -> None:
         """Initialise the API client."""
-        self._osm_username = osm_username
         self._gmaps_token = gmaps_token
-
-        self._gmaps_client = Client(gmaps_token, timeout=10)
-
-        self.nominatim = Nominatim(
-            user_agent=f"Journey Home Assistant Integration ({self._osm_username})",
-            adapter_factory=AioHTTPAdapter,
-        )
-
-    async def async_get_address(self, location: Coordinates):
-        """Get address corresponding to location using OSM."""
-        try:
-            return await self.nominatim.reverse(
-                f"{location[0]}, {location[1]}", zoom=16
-            )
-        except Exception as exception:  # pylint: disable=broad-except
-            _LOGGER.error("Failed to perform reverse geocoding - %s", exception)
-            return None
+        self._gmaps_client = Client(gmaps_token, timeout=TIMEOUT)
 
     def get_traveltime(self, origin: Coordinates, destination: Coordinates):
         """Get the travel time from origin to destination using Google Maps."""

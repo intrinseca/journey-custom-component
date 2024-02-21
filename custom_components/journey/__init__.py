@@ -9,7 +9,6 @@ import math
 from dataclasses import dataclass
 from datetime import timedelta
 
-from geopy.location import Location
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Config, Event, HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
@@ -21,10 +20,8 @@ from .const import (
     CONF_DESTINATION,
     CONF_GMAPS_TOKEN,
     CONF_ORIGIN,
-    CONF_OSM_USERNAME,
     DOMAIN,
     PLATFORMS,
-    STARTUP_MESSAGE,
 )
 from .helpers import get_location_entity, get_location_from_attributes
 
@@ -43,14 +40,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up this integration using UI."""
     if hass.data.get(DOMAIN) is None:
         hass.data.setdefault(DOMAIN, {})
-        _LOGGER.info(STARTUP_MESSAGE)
 
-    username = entry.data.get(CONF_OSM_USERNAME)
-    password = entry.data.get(CONF_GMAPS_TOKEN)
+    token = entry.data.get(CONF_GMAPS_TOKEN)
 
     origin = entry.data.get(CONF_ORIGIN)
     destination = entry.data.get(CONF_DESTINATION)
-    client = JourneyApiClient(username, password)
+    client = JourneyApiClient(token)
 
     coordinator = JourneyDataUpdateCoordinator(
         hass, client=client, origin=origin, destination=destination
@@ -129,25 +124,7 @@ class JourneyTravelTime:
         return round(100 * self.delay / self.duration) if self.duration > 0 else 0
 
 
-@dataclass
-class JourneyData:
-    """Hold the journey data pulled from the APIs."""
-
-    origin_reverse_geocode: Location
-    travel_time: JourneyTravelTime
-
-    @property
-    def origin_address(self) -> str:
-        """Get the suitable address string from the reverse geocoding lookup."""
-        if self.origin_reverse_geocode is not None:
-            for key in ["village", "suburb", "town", "city", "state", "country"]:
-                if key in self.origin_reverse_geocode.raw["address"]:
-                    return self.origin_reverse_geocode.raw["address"][key]
-
-        return "Unknown"
-
-
-class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):  # type: ignore
+class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyTravelTime]):  # type: ignore
     """Class to manage fetching data from the API."""
 
     def __init__(
@@ -200,12 +177,6 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):  # type:
             origin_entity = get_location_entity(self.hass, self._origin_entity_id)
             origin = get_location_from_attributes(origin_entity)
 
-            if origin is not None:
-                address = await self.api.async_get_address(origin)
-            else:
-                _LOGGER.error("Unable to get origin coordinates")
-                address = None
-
             destination_entity = get_location_entity(
                 self.hass, self._destination_entity_id
             )
@@ -229,20 +200,18 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):  # type:
                     destination=destination_name,
                 )
 
-            return JourneyData(address, traveltime)
+            return traveltime
         except Exception as exception:
             raise UpdateFailed() from exception
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle removal of an entry."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
     unloaded = all(
         await asyncio.gather(
             *[
                 hass.config_entries.async_forward_entry_unload(entry, platform)
                 for platform in PLATFORMS
-                if platform in coordinator.platforms
             ]
         )
     )
