@@ -13,6 +13,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Config, Event, HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.location import find_coordinates
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import JourneyApiClient
@@ -23,7 +24,8 @@ from .const import (
     DOMAIN,
     PLATFORMS,
 )
-from .helpers import get_location_entity, get_location_from_attributes
+
+# from .helpers import get_location_entity, get_location_from_attributes
 
 SCAN_INTERVAL = timedelta(minutes=5)
 
@@ -174,30 +176,21 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyTravelTime]):  #
     async def update(self):
         """Update data via library."""
         try:
-            origin_entity = get_location_entity(self.hass, self._origin_entity_id)
-            origin = get_location_from_attributes(origin_entity)
+            origin = find_coordinates(self.hass, self._origin_entity_id)
+            destination = find_coordinates(self.hass, self._destination_entity_id)
 
-            destination_entity = get_location_entity(
-                self.hass, self._destination_entity_id
-            )
-
-            if destination_entity is None:
-                _LOGGER.error("Unable to get destination coordinates")
-                traveltime = JourneyTravelTime(None, None)
-            elif origin_entity.entity_id == destination_entity.entity_id:
-                _LOGGER.info("origin is equal to destination zone")
+            if origin == destination:
+                _LOGGER.info("origin is equal to destination")
                 traveltime = JourneyTravelTime(
                     {"duration": {"value": 0}, "duration_in_traffic": {"value": 0}},
-                    origin_entity.name,
+                    destination,
                 )
             else:
-                destination = get_location_from_attributes(destination_entity)
-                destination_name = destination_entity.name
                 traveltime = JourneyTravelTime(
                     travel_time=await self.api.async_get_traveltime(
                         origin, destination
                     ),
-                    destination=destination_name,
+                    destination=destination,
                 )
 
             return traveltime
