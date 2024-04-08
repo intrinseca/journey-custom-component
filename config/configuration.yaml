@@ -22,3 +22,8 @@ homeassistant:
         - 127.0.0.1/32
 
 demo:
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - ::1
