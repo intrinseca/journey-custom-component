@@ -13,6 +13,8 @@ logger:
 
 input_text:
   destination:
+    name: MDA Destination
+    initial: "home"
 
 homeassistant:
   auth_providers:

@@ -3,6 +3,7 @@
 For more details about this integration, please refer to
 https://github.com/intrinseca/journey
 """
+
 import asyncio
 import logging
 import math
@@ -13,7 +14,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Config, Event, HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.event import async_track_state_change_event
-from homeassistant.helpers.location import find_coordinates
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import JourneyApiClient
@@ -24,8 +24,7 @@ from .const import (
     DOMAIN,
     PLATFORMS,
 )
-
-# from .helpers import get_location_entity, get_location_from_attributes
+from .helpers import find_coordinates
 
 SCAN_INTERVAL = timedelta(minutes=5)
 
@@ -176,21 +175,33 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyTravelTime]):  #
     async def update(self):
         """Update data via library."""
         try:
-            origin = find_coordinates(self.hass, self._origin_entity_id)
-            destination = find_coordinates(self.hass, self._destination_entity_id)
+            origin_name, origin_coords = find_coordinates(
+                self.hass, self._origin_entity_id
+            )
+            destination_name, destination_coords = find_coordinates(
+                self.hass, self._destination_entity_id
+            )
 
-            if origin == destination:
+            if origin_coords == destination_coords:
                 _LOGGER.info("origin is equal to destination")
                 traveltime = JourneyTravelTime(
-                    {"duration": {"value": 0}, "duration_in_traffic": {"value": 0}},
-                    destination,
+                    travel_time={
+                        "duration": {"value": 0},
+                        "duration_in_traffic": {"value": 0},
+                    },
+                    destination=origin_name,
                 )
             else:
+                destination_addr, traveltime = await self.api.async_get_traveltime(
+                    origin_coords, destination_coords
+                )
+
+                if destination_name is None:
+                    destination_name = destination_addr.split(",")[0]
+
                 traveltime = JourneyTravelTime(
-                    travel_time=await self.api.async_get_traveltime(
-                        origin, destination
-                    ),
-                    destination=destination,
+                    travel_time=traveltime,
+                    destination=destination_name,
                 )
 
             return traveltime

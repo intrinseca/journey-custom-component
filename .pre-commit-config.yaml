@@ -24,3 +24,4 @@ repos:
           - --pretty
           - --show-error-codes
           - --ignore-missing-imports
+          - --python-version=3.12

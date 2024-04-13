@@ -1,4 +1,5 @@
 """Sample API Client."""
+
 import asyncio
 import logging
 from datetime import datetime
@@ -30,7 +31,7 @@ class JourneyApiClient:
                 mode="driving",
                 departure_time=datetime.now(),
             )
-            return result["rows"][0]["elements"][0]
+            return result["destination_addresses"][0], result["rows"][0]["elements"][0]
         except Exception as exception:  # pylint: disable=broad-except
             _LOGGER.error("Failed to get distances - %s", exception)
             return None
