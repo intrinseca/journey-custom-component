@@ -1,4 +1,5 @@
 """Sensor platform for Journey."""
+
 from datetime import datetime, timedelta
 
 from homeassistant.const import UnitOfTime

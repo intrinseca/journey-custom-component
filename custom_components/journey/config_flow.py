@@ -1,4 +1,5 @@
 """Adds config flow for Journey."""
+
 import voluptuous as vol
 from homeassistant import config_entries
 
