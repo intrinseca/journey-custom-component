@@ -2,6 +2,14 @@
 
 set -e
 
-cd "$(dirname "$0")/.."
+sudo wget -O /bin/go2rtc https://github.com/AlexxIT/go2rtc/releases/download/v1.9.7/go2rtc_linux_amd64
+sudo chmod +x /bin/go2rtc
 
-python3 -m pip install --requirement requirements.txt
+sudo apt update
+sudo apt install libturbojpeg0 ffmpeg
+
+pipx install uv
+uv venv
+uv pip install --requirement requirements.txt
+
+uv run pre-commit install
