@@ -11,7 +11,8 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import Config, Event, HomeAssistant
+from homeassistant.core import Event, HomeAssistant
+from homeassistant.core_config import Config
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -54,11 +55,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    for platform in PLATFORMS:
-        if entry.options.get(platform, True):
-            hass.async_add_job(
-                hass.config_entries.async_forward_entry_setup(entry, platform)  # type: ignore
-            )
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     entry.add_update_listener(async_reload_entry)
     return True
@@ -125,7 +122,8 @@ class JourneyTravelTime:
         return round(100 * self.delay / self.duration) if self.duration > 0 else 0
 
 
-class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyTravelTime]):  # type: ignore
+# type: ignore
+class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyTravelTime]):
     """Class to manage fetching data from the API."""
 
     def __init__(
