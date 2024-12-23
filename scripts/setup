@@ -6,10 +6,10 @@ sudo wget -O /bin/go2rtc https://github.com/AlexxIT/go2rtc/releases/download/v1.
 sudo chmod +x /bin/go2rtc
 
 sudo apt update
-sudo apt install libturbojpeg0 ffmpeg
+sudo apt install -y libturbojpeg0 ffmpeg
 
 pipx install uv
 uv venv
-uv pip install --requirement requirements.txt
+uv pip install -r requirements.txt
 
 uv run pre-commit install

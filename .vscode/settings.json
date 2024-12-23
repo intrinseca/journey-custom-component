@@ -1,5 +1,12 @@
 {
   "files.associations": {
     "*.yaml": "home-assistant"
-  }
+  },
+  "json.format.enable": false,
+  "remote.autoForwardPorts": false,
+  "python.languageServer": "Pylance",
+  "python.analysis.autoFormatStrings": true,
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.include": ["/workspaces/journey/custom_components/**"],
+  "python.analysis.diagnosticMode": "workspace"
 }
