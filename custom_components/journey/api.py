@@ -172,7 +172,7 @@ class HereMapsApiClient(ApiClient):
         def test_api():
             try:
                 self._here_client.car_route(
-                    origins=[(51.478, 0)], destinations=[(51.748, 0.02)]
+                    origin=(51.478, 0), destination=(51.748, 0.02)
                 )
             except Exception as ex:
                 _LOGGER.error("Failed to validate credentials - %s", ex)
