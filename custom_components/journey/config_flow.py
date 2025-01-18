@@ -56,10 +56,12 @@ class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: ign
                     vol.Required(CONF_DESTINATION): str,
                     vol.Required(CONF_GMAPS_TOKEN): str,
                     vol.Required(CONF_HERE_TOKEN): str,
-                    vol.Optional(CONF_SELECTED_API, default="Google"): [
-                        "Google",
-                        "HERE",
-                    ],
+                    vol.Optional(CONF_SELECTED_API, default="Google"): vol.In(
+                        [
+                            "Google",
+                            "HERE",
+                        ]
+                    ),
                 }
             ),
             errors=self._errors,

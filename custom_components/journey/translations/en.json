@@ -5,6 +5,8 @@
         "description": "Configure the API access and origin/destination points",
         "data": {
           "gmaps_token": "Google Maps API token",
+          "here_token": "Here Maps API token",
+          "selected_api": "Selected API",
           "origin": "Origin",
           "destination": "Destination",
           "name": "Sensor Name"
