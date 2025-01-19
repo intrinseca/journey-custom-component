@@ -12,6 +12,7 @@ This Home Assistant custom component calculates driving time using either
 Google Maps or HERE APIs. The source and destination are recursively resolved
 from entity states, allowing you to use e.g. a text input referring
 to the name of a zone or another person as a destination.
+
 ---
 
 [commits-shield]: https://img.shields.io/github/commit-activity/y/intrinseca/journey-custom-component.svg?style=for-the-badge
