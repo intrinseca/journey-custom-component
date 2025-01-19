@@ -10,6 +10,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.core_config import Config
+from homeassistant.helpers import config_validation as cv
 
 from .api import ApiClient, GoogleMapsApiClient, HereMapsApiClient
 from .const import (
@@ -24,6 +25,8 @@ from .const import (
 from .coordinator import JourneyDataUpdateCoordinator
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 # pylint: disable=unused-argument
