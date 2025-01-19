@@ -6,6 +6,7 @@ import math
 import typing
 from dataclasses import dataclass
 from datetime import datetime
+import json
 
 from googlemaps import Client
 from here_location_services import LS
@@ -63,6 +64,12 @@ class TravelTimeData:
         )
 
 
+class TravelTimeApiError(Exception):
+    """Exception raised when API returns an error."""
+
+    pass
+
+
 class ApiClient(typing.Protocol):
     """Interface for Travel Time APIs."""
 
@@ -98,6 +105,13 @@ class GoogleMapsApiClient(ApiClient):
             mode="driving",
             departure_time=datetime.now(),
         )
+
+        _LOGGER.debug("Raw Google response: %s", json.dumps(result))
+
+        status = result["rows"][0]["elements"][0]["status"]
+        if status != "OK":
+            raise TravelTimeApiError(f"Google returned status {status}")
+
         return TravelTimeData(
             origin,
             result["destination_addresses"][0],

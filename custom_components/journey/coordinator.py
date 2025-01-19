@@ -105,4 +105,4 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[TravelTimeData]):
                 )
 
         except Exception as exception:
-            raise UpdateFailed(str(exception)) from exception
+            raise UpdateFailed(repr(exception)) from exception
