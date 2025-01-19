@@ -2,7 +2,7 @@
 
 import voluptuous as vol
 from homeassistant import config_entries
-
+from typing import Any
 from .api import GoogleMapsApiClient, HereMapsApiClient
 from .const import (
     CONF_DESTINATION,
@@ -46,25 +46,50 @@ class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: ign
 
         return await self._show_config_form(user_input)
 
-    async def _show_config_form(self, user_input):  # pylint: disable=unused-argument
+    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None):
+        """Show the configuration form again to reconfigure."""
+        self._errors = {}
+
+        if user_input is not None:
+            valid = await self._test_credentials(
+                user_input[CONF_API_TOKEN], user_input[CONF_SELECTED_API]
+            )
+            if valid:
+                return self.async_update_reload_and_abort(
+                    self._get_reconfigure_entry(),
+                    data_updates=user_input,
+                )
+            else:
+                self._errors["base"] = "auth"
+
+            return await self._show_config_form(user_input, step_id="reconfigure")
+
+        return await self._show_config_form(
+            self._get_reconfigure_entry().data, step_id="reconfigure"
+        )
+
+    async def _show_config_form(self, user_input, step_id="user"):  # pylint: disable=unused-argument
         """Show the configuration form to edit location data."""
         return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_NAME): str,
-                    vol.Required(CONF_ORIGIN): str,
-                    vol.Required(CONF_DESTINATION): str,
-                    vol.Required(CONF_API_TOKEN): str,
-                    vol.Optional(
-                        CONF_SELECTED_API, default=CONF_SELECTED_API_GOOGLE
-                    ): vol.In(
-                        [
-                            CONF_SELECTED_API_GOOGLE,
-                            CONF_SELECTED_API_HERE,
-                        ]
-                    ),
-                }
+            step_id=step_id,
+            data_schema=self.add_suggested_values_to_schema(
+                vol.Schema(
+                    {
+                        vol.Required(CONF_NAME): str,
+                        vol.Required(CONF_ORIGIN): str,
+                        vol.Required(CONF_DESTINATION): str,
+                        vol.Required(CONF_API_TOKEN): str,
+                        vol.Optional(
+                            CONF_SELECTED_API, default=CONF_SELECTED_API_GOOGLE
+                        ): vol.In(
+                            [
+                                CONF_SELECTED_API_GOOGLE,
+                                CONF_SELECTED_API_HERE,
+                            ]
+                        ),
+                    }
+                ),
+                user_input,
             ),
             errors=self._errors,
         )
