@@ -1,12 +1,12 @@
 """Sample API Client."""
 
 import asyncio
+import json
 import logging
 import math
 import typing
 from dataclasses import dataclass
 from datetime import datetime
-import json
 
 from googlemaps import Client
 from here_location_services import LS

@@ -1,6 +1,6 @@
 # The contents of this file is based on https://github.com/home-assistant/core/blob/dev/pyproject.toml
 
-target-version = "py310"
+target-version = "py313"
 
 [lint]
 
@@ -11,6 +11,7 @@ select = [
     "D",  # docstrings
     "E",  # pycodestyle
     "F",  # pyflakes/autoflake
+    "I",
     "ICN001", # import concentions; {name} should be imported as {asname}
     "PGH004",  # Use specific rule codes when using noqa
     "PLC0414", # Useless import alias. Import alias does not rename original package.

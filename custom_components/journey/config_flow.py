@@ -1,12 +1,14 @@
 """Adds config flow for Journey."""
 
+from typing import Any
+
 import voluptuous as vol
 from homeassistant import config_entries
-from typing import Any
+
 from .api import GoogleMapsApiClient, HereMapsApiClient
 from .const import (
-    CONF_DESTINATION,
     CONF_API_TOKEN,
+    CONF_DESTINATION,
     CONF_NAME,
     CONF_ORIGIN,
     CONF_SELECTED_API,
