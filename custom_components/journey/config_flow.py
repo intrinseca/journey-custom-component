@@ -6,11 +6,12 @@ from homeassistant import config_entries
 from .api import GoogleMapsApiClient, HereMapsApiClient
 from .const import (
     CONF_DESTINATION,
-    CONF_GMAPS_TOKEN,
-    CONF_HERE_TOKEN,
+    CONF_API_TOKEN,
     CONF_NAME,
     CONF_ORIGIN,
     CONF_SELECTED_API,
+    CONF_SELECTED_API_GOOGLE,
+    CONF_SELECTED_API_HERE,
     DOMAIN,
 )
 
@@ -18,8 +19,8 @@ from .const import (
 class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
     """Config flow for journey."""
 
-    VERSION = 2
-    MINOR_VERSION = 1
+    VERSION = 3
+    MINOR_VERSION = 0
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
     def __init__(self):
@@ -32,7 +33,7 @@ class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: ign
 
         if user_input is not None:
             valid = await self._test_credentials(
-                user_input[CONF_GMAPS_TOKEN], user_input[CONF_HERE_TOKEN]
+                user_input[CONF_API_TOKEN], user_input[CONF_SELECTED_API]
             )
             if valid:
                 return self.async_create_entry(
@@ -54,12 +55,13 @@ class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: ign
                     vol.Required(CONF_NAME): str,
                     vol.Required(CONF_ORIGIN): str,
                     vol.Required(CONF_DESTINATION): str,
-                    vol.Required(CONF_GMAPS_TOKEN): str,
-                    vol.Required(CONF_HERE_TOKEN): str,
-                    vol.Optional(CONF_SELECTED_API, default="Google"): vol.In(
+                    vol.Required(CONF_API_TOKEN): str,
+                    vol.Optional(
+                        CONF_SELECTED_API, default=CONF_SELECTED_API_GOOGLE
+                    ): vol.In(
                         [
-                            "Google",
-                            "HERE",
+                            CONF_SELECTED_API_GOOGLE,
+                            CONF_SELECTED_API_HERE,
                         ]
                     ),
                 }
@@ -67,14 +69,15 @@ class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: ign
             errors=self._errors,
         )
 
-    async def _test_credentials(self, gmaps_token, here_token):
+    async def _test_credentials(self, api_token, selected_api):
         """Return true if credentials is valid."""
         try:
-            gmaps_client = GoogleMapsApiClient(gmaps_token)
-            await gmaps_client.test_credentials()
-
-            here_client = HereMapsApiClient(here_token)
-            await here_client.test_credentials()
+            if selected_api == CONF_SELECTED_API_GOOGLE:
+                gmaps_client = GoogleMapsApiClient(api_token)
+                await gmaps_client.test_credentials()
+            else:
+                here_client = HereMapsApiClient(api_token)
+                await here_client.test_credentials()
 
             return True
         except Exception:  # pylint: disable=broad-except

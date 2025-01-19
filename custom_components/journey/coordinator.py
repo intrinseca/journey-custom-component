@@ -5,7 +5,10 @@ from datetime import timedelta
 
 from homeassistant.core import Event, HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import (
+    async_track_state_change_event,
+    EventStateChangedData,
+)
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import ApiClient, TravelTimeData
@@ -55,15 +58,21 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[TravelTimeData]):
             ),
         )
 
-    async def _handle_origin_state_change(self, event: Event):
-        if event.data["old_state"].state == event.data["new_state"].state:
+    async def _handle_origin_state_change(self, event: Event[EventStateChangedData]):
+        if (
+            event.data["old_state"] is not None
+            and event.data["new_state"] is not None
+            and event.data["old_state"].state == event.data["new_state"].state
+        ):
             _LOGGER.debug("Origin updated without state change, requesting refresh")
             await self.async_request_refresh()
         else:
             _LOGGER.debug("Origin updated *with* state change, forcing refresh")
             await self.async_refresh()
 
-    async def _handle_destination_state_change(self, event: Event):
+    async def _handle_destination_state_change(
+        self, event: Event[EventStateChangedData]
+    ):
         await self.async_refresh()
 
     async def update(self) -> TravelTimeData:

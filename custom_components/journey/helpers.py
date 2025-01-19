@@ -40,7 +40,7 @@ def find_coordinates(
             name,
             zone_entity.entity_id,  # type: ignore[union-attr]
         )
-        return zone_entity.name, location._get_location_from_attributes(zone_entity)  # type: ignore[arg-type]
+        return zone_entity.name, location._get_location_from_attributes(zone_entity)  # type: ignore[arg-type,union-attr]
 
     # Check if entity_state is a friendly name of a zone
     if (zone_coords := location.resolve_zone(hass, entity_state.state)) is not None:

@@ -18,11 +18,13 @@ PLATFORMS = [SENSOR]
 # Configuration and options
 CONF_ENABLED = "enabled"
 CONF_NAME = "name"
-CONF_GMAPS_TOKEN = "gmaps_token"
-CONF_HERE_TOKEN = "here_token"
+CONF_API_TOKEN = "api_token"
 CONF_ORIGIN = "origin"
 CONF_DESTINATION = "destination"
 CONF_SELECTED_API = "selected_api"
+
+CONF_SELECTED_API_HERE = "HERE"
+CONF_SELECTED_API_GOOGLE = "Google"
 
 # Defaults
 DEFAULT_NAME = DOMAIN

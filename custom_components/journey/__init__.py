@@ -11,13 +11,13 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.core_config import Config
 
-from .api import GoogleMapsApiClient, HereMapsApiClient
+from .api import GoogleMapsApiClient, HereMapsApiClient, ApiClient
 from .const import (
     CONF_DESTINATION,
-    CONF_GMAPS_TOKEN,
-    CONF_HERE_TOKEN,
+    CONF_API_TOKEN,
     CONF_ORIGIN,
     CONF_SELECTED_API,
+    CONF_SELECTED_API_GOOGLE,
     DOMAIN,
     PLATFORMS,
 )
@@ -37,19 +37,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     if hass.data.get(DOMAIN) is None:
         hass.data.setdefault(DOMAIN, {})
 
-    origin = entry.data.get(CONF_ORIGIN)
-    destination = entry.data.get(CONF_DESTINATION)
-
-    gmaps_client = GoogleMapsApiClient(entry.data.get(CONF_GMAPS_TOKEN))
-    here_client = HereMapsApiClient(entry.data.get(CONF_HERE_TOKEN))
+    client: ApiClient
+    if entry.data.get(CONF_SELECTED_API) == CONF_SELECTED_API_GOOGLE:
+        client = GoogleMapsApiClient(entry.data[CONF_API_TOKEN])
+    else:
+        client = HereMapsApiClient(entry.data[CONF_API_TOKEN])
 
     coordinator = JourneyDataUpdateCoordinator(
         hass,
-        client=gmaps_client
-        if entry.data.get(CONF_SELECTED_API) == "Google"
-        else here_client,
-        origin=origin,
-        destination=destination,
+        client=client,
+        origin=entry.data[CONF_ORIGIN],
+        destination=entry.data[CONF_DESTINATION],
     )
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
@@ -57,6 +55,37 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     entry.add_update_listener(async_reload_entry)
+    return True
+
+
+async def async_migrate_entry(hass, config_entry: ConfigEntry):
+    """Migrate old entry."""
+    _LOGGER.debug(
+        "Migrating configuration from version %s.%s",
+        config_entry.version,
+        config_entry.minor_version,
+    )
+
+    if config_entry.version > 3:
+        # This means the user has downgraded from a future version
+        return False
+
+    if config_entry.version == 2:
+        new_data = {**config_entry.data}
+        new_data[CONF_API_TOKEN] = new_data["gmaps_token"]
+        del new_data["gmaps_token"]
+        new_data[CONF_SELECTED_API] = CONF_SELECTED_API_GOOGLE
+
+        hass.config_entries.async_update_entry(
+            config_entry, data=new_data, minor_version=0, version=3
+        )
+
+    _LOGGER.debug(
+        "Migration to configuration version %s.%s successful",
+        config_entry.version,
+        config_entry.minor_version,
+    )
+
     return True
 
 
