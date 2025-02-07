@@ -35,31 +35,25 @@ class JourneyTimeSensor(CoordinatorEntity[JourneyDataUpdateCoordinator]):
         self._attr_unique_id = self.config_entry.entry_id + "-time"
 
     @property
-    def destination_name(self) -> str:
-        """The name of the destination zone."""
-        if (dest_state := self.hass.states.get(self.destination)) is not None:
-            return dest_state.name
-
-        return self.destination
-
-    @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes."""
         if not self.coordinator.data:
             return {}
 
         return {
-            "duration": self.coordinator.data.travel_time_secs,
-            "duration_in_traffic": self.coordinator.data.travel_time_traffic_secs,
-            "delay_minutes": self.coordinator.data.delay_min,
-            "delay_factor": self.coordinator.data.delay_factor,
-            "destination": self.coordinator.data.destination,
+            "duration": self.coordinator.data.travel_time.travel_time_secs,
+            "duration_in_traffic": self.coordinator.data.travel_time.travel_time_traffic_secs,
+            "delay_minutes": self.coordinator.data.travel_time.delay_min,
+            "delay_factor": self.coordinator.data.travel_time.delay_factor,
+            "destination": self.coordinator.data.destination.name,
             "eta": (
                 (
                     datetime.now().astimezone()
-                    + timedelta(seconds=self.coordinator.data.travel_time_traffic_secs)
+                    + timedelta(
+                        seconds=self.coordinator.data.travel_time.travel_time_traffic_secs
+                    )
                 ).isoformat()
-                if self.coordinator.data.travel_time_traffic_secs
+                if self.coordinator.data.travel_time.travel_time_traffic_secs
                 else None
             ),
         }
@@ -74,6 +68,6 @@ class JourneyTimeSensor(CoordinatorEntity[JourneyDataUpdateCoordinator]):
     def state(self) -> int | None:
         """Return the state of the sensor."""
         if self.coordinator.data:
-            return self.coordinator.data.travel_time_traffic_min
+            return self.coordinator.data.travel_time.travel_time_traffic_min
         else:
             return None

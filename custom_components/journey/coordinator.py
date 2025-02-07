@@ -1,6 +1,7 @@
 """Data update coordinator for routing APIs."""
 
 import logging
+from dataclasses import dataclass
 from datetime import timedelta
 
 from homeassistant.core import Event, HomeAssistant
@@ -15,14 +16,23 @@ from .api import ApiClient, TravelTimeData
 from .const import (
     DOMAIN,
 )
-from .helpers import find_coordinates
+from .helpers import FindCoordinatesError, LocationData, find_coordinates
 
 SCAN_INTERVAL = timedelta(minutes=5)
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-class JourneyDataUpdateCoordinator(DataUpdateCoordinator[TravelTimeData]):
+@dataclass
+class JourneyData:
+    """Container class for Journey data."""
+
+    origin: LocationData
+    destination: LocationData
+    travel_time: TravelTimeData
+
+
+class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):
     """Class to manage fetching data from the API."""
 
     def __init__(
@@ -75,34 +85,37 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[TravelTimeData]):
     ):
         await self.async_refresh()
 
-    async def update(self) -> TravelTimeData:
+    async def update(self) -> JourneyData:
         """Update data via library."""
-        origin_name, origin_coords = find_coordinates(self.hass, self._origin_entity_id)
-        destination_name, destination_coords = find_coordinates(
-            self.hass, self._destination_entity_id
-        )
-
-        if origin_coords is None:
-            raise UpdateFailed("Could not find destination coords")
-        if destination_coords is None:
-            raise UpdateFailed("Could not find origin coords")
+        try:
+            origin = find_coordinates(self.hass, self._origin_entity_id)
+        except FindCoordinatesError as ex:
+            raise UpdateFailed(f"Could not find origin coords: {ex!r}")
 
         try:
-            if origin_coords == destination_coords:
+            destination = find_coordinates(self.hass, self._destination_entity_id)
+        except FindCoordinatesError as ex:
+            raise UpdateFailed(f"Could not find destination coords: {ex!r}")
+
+        try:
+            if origin.coords == destination.coords:
                 _LOGGER.info("origin is equal to destination")
-                return TravelTimeData(
-                    origin_name if origin_name is not None else origin_coords,
-                    destination_name
-                    if destination_name is not None
-                    else destination_coords,
-                    0,
-                    0,
-                    0,
+                return JourneyData(
+                    origin,
+                    destination,
+                    TravelTimeData(
+                        0,
+                        0,
+                        0,
+                    ),
                 )
             else:
-                return await self.api.async_get_traveltime(
-                    origin_coords, destination_coords
+                return JourneyData(
+                    origin,
+                    destination,
+                    await self.api.async_get_traveltime(
+                        origin.coords, destination.coords
+                    ),
                 )
-
         except Exception as exception:
             raise UpdateFailed(repr(exception)) from exception

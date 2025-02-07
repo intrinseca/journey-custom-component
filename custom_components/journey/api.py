@@ -20,8 +20,6 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 class TravelTimeData:
     """Container for API results."""
 
-    origin: str
-    destination: str
     travel_time_secs: float
     travel_time_traffic_secs: float
     distance_m: float
@@ -113,8 +111,6 @@ class GoogleMapsApiClient(ApiClient):
             raise TravelTimeApiError(f"Google returned status {status}")
 
         return TravelTimeData(
-            origin,
-            result["destination_addresses"][0],
             result["rows"][0]["elements"][0]["duration"]["value"],
             result["rows"][0]["elements"][0]["duration_in_traffic"]["value"],
             result["rows"][0]["elements"][0]["distance"]["value"],
@@ -131,11 +127,12 @@ class GoogleMapsApiClient(ApiClient):
     async def test_credentials(self) -> bool:
         """Check the Google Maps API credentials."""
 
-        def test_api():
+        def test_api() -> bool:
             try:
                 self._gmaps_client.distance_matrix(
                     origins=[(51.478, 0)], destinations=[(51.748, 0.02)], mode="driving"
                 )
+                return True
             except Exception as ex:
                 _LOGGER.error("Failed to validate credentials - %s", ex)
                 raise
@@ -165,8 +162,6 @@ class HereMapsApiClient(ApiClient):
         )
 
         return TravelTimeData(
-            origin,
-            destination,
             result.routes[0]["sections"][0]["summary"]["baseDuration"],
             result.routes[0]["sections"][0]["summary"]["duration"],
             result.routes[0]["sections"][0]["summary"]["length"],
@@ -183,11 +178,12 @@ class HereMapsApiClient(ApiClient):
     async def test_credentials(self) -> bool:
         """Check the HERE API credentials."""
 
-        def test_api():
+        def test_api() -> bool:
             try:
                 self._here_client.car_route(
                     origin=(51.478, 0), destination=(51.748, 0.02)
                 )
+                return True
             except Exception as ex:
                 _LOGGER.error("Failed to validate credentials - %s", ex)
                 raise
