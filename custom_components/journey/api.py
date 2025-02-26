@@ -156,9 +156,7 @@ class HereMapsApiClient(ApiClient):
         result = self._here_client.car_route(
             origin=origin_split,
             destination=destination_split,
-            return_results=[
-                "summary",
-            ],
+            return_results=["summary", "typicalDuration"],
         )
 
         return TravelTimeData(
