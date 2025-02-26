@@ -162,7 +162,7 @@ class HereMapsApiClient(ApiClient):
         )
 
         return TravelTimeData(
-            result.routes[0]["sections"][0]["summary"]["baseDuration"],
+            result.routes[0]["sections"][0]["summary"]["typicalDuration"],
             result.routes[0]["sections"][0]["summary"]["duration"],
             result.routes[0]["sections"][0]["summary"]["length"],
         )
